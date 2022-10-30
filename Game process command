@@ -1,0 +1,159 @@
+import random
+import blackjack
+from tabulate import tabulate
+
+
+# This block code will create a table to show player,bot and dealer's name,deck and money
+def show_table(player, dealer, bet_for_player):
+    data = [[player.name, player.deck, player.value, bet_for_player,player.money],
+            [dealer.name, dealer.deck, dealer.value, bet_for_player,dealer.money]]
+    header_name = ['Name', 'Deck', 'Deck value', 'Bet','money']
+    print(tabulate(data, headers=header_name, tablefmt="fancy_grid"))
+
+
+def set_up_money(name):
+    while True:
+        try:
+            money = int(input(f"Please type the money you want {name} start with: "))
+        except ValueError:
+            print('Is not a number')
+            continue
+        else:
+            if int(money) > 0:
+                break
+            elif int(money) < 0:
+                print('You can not start with negative money')
+            else:
+                print('The money can not be 0')
+    return money
+
+
+def ask_for_bet(player, dealer):
+    while True:
+        try:
+            bet = int(input(f"Please type the bet you want put in: "))
+        except ValueError:
+            print('Is not a number')
+            continue
+        else:
+            if bet - player.money > 0:
+                print(f'You do not have enough bet, please re enter a bet, you current bet is {player.money}')
+                continue
+            if bet <= 0:
+                print("You can not put 0 or negative value for your bet")
+                continue
+            if player.money > dealer.money:
+                if bet > dealer.money:
+                    print(
+                        f'Your bet have exceed the dealers money,please redo, the current dealers money is {dealer.money}')
+                    continue
+            break
+    return bet
+
+
+
+def check_bust_for(gamer):
+    while gamer.value > 21:
+        if gamer.ace > 0:
+            gamer.ace -= 1
+            gamer.value -= 10
+        else:
+            return True
+
+    else:
+        return False
+
+
+def stand(gamer):
+    print(f'{gamer.name} choose to stand')
+
+
+def hit(gamer, the_deck):
+    print(f'{gamer.name} choose to hit another card')
+    gamer.add_card(the_deck.deal_one())
+
+
+def stand_or_hit(player):
+    while True:
+        word = input('Choose stand or hit (s or h): ')
+        if word.lower() == 's':
+            stand(player)
+            break
+        elif word.lower(player) == 'h':
+            hit()
+            break
+        else:
+            print('Please re enter, I do not get the command')
+            continue
+
+
+def game_process(player, dealer):
+    while player.money > 0 and dealer.money > 0:
+        bet = ask_for_bet(player, dealer)
+        the_deck = blackjack.Deck()
+        the_deck.shuffle_the_deck()
+        player.add_card(the_deck.deal_one())
+        dealer.add_card(the_deck.deal_one())
+        player.add_card(the_deck.deal_one())
+        show_table(player, dealer, bet)
+        if player.value == 21:
+            player.win_the_money(1.5 * bet)
+            dealer.lose_the_money(1.5 * bet)
+            continue
+        stand_player = False
+        while check_bust_for(player) == False and stand_player == False:
+            word = input(f'Choose stand or hit, your current deck value is {player.value} (s or H): ')
+            if word.lower() == 's':
+                stand(player)
+                stand_player == True
+                break
+            elif word.lower() == 'h':
+                hit(player, the_deck)
+            else:
+                print('Please re enter, I do not get the command')
+                continue
+        if check_bust_for(player) == True:
+            dealer.win_the_money(bet)
+            player.lose_the_money(bet)
+            show_table(player, dealer, bet)
+            print(f'You bust, your value is {player.value}')
+            break
+        else:
+            while dealer.value < 17:
+                hit(dealer, the_deck)
+
+            if dealer.value > 21:
+                dealer.win_the_money(bet)
+                player.lose_the_money(bet)
+                show_table(player, dealer, bet)
+                print(f'Dealer bust, Dealers value is {dealer.value}')
+                break
+        if player.value > dealer.value:
+            player.win_the_money(bet)
+            dealer.lose_the_money(bet)
+            print(f'{player.name}s value is {player.value}')
+            print(f'Dealers value is {dealer.value}')
+            print(f'You won ${bet}')
+        elif player.value < dealer.value:
+            dealer.win_the_money(bet)
+            player.lose_the_money(bet)
+            print(f'{player.name}s value is {player.value}')
+            print(f'Dealers value is {dealer.value}')
+            print(f'You lose ${bet}')
+        else:
+            print(f'{player.name}s value is {player.value}')
+            print(f'Dealers value is {dealer.value}')
+            print('Tie')
+
+
+def black_jack():
+    name = input("Please enter the name you want get called: ")
+    money = set_up_money(name)
+    player1 = blackjack.Player(name,money)
+    dealer_money = set_up_money('Dealer')
+    dealer1 = blackjack.Dealer("Dealer", dealer_money)
+    game_process(player1, dealer1)
+
+
+
+black_jack()
